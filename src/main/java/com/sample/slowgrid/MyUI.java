@@ -26,16 +26,11 @@ import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
 /**
- * This UI is the application entry point. A UI may either represent a browser
- * window (or tab) or some part of a HTML page where a Vaadin application is
- * embedded.
- * <p>
- * The UI is initialized using {@link #init(VaadinRequest)}. This method is
- * intended to be overridden to add component to the user interface and
- * initialize non-component functionality.
+ * This UI is the application entry point.
  */
 @Theme("mytheme")
 public class MyUI extends UI implements PollListener {
+	private static final long serialVersionUID = 1L;
 
 	@WebServlet(urlPatterns = "/*", name = "MyUIServlet", asyncSupported = true)
 	@VaadinServletConfiguration(ui = MyUI.class, productionMode = true)
@@ -43,16 +38,16 @@ public class MyUI extends UI implements PollListener {
 		private static final long serialVersionUID = 1L;
 	}
 
-	private ListDataProvider<GridEntry> emptyGridDataProvider = new ListDataProvider<GridEntry>(Collections.emptyList());
+	private static ListDataProvider<GridEntry> emptyGridDataProvider = new ListDataProvider<GridEntry>(Collections.emptyList());
 	private ListDataProvider<GridEntry> fullGridDataProvider = new ListDataProvider<GridEntry>(createCollection(200));
-
-	private static final long serialVersionUID = 1L;
-
+	// TODO - slow DataProvider that simulates a slower database backend
+	// private ListDataProvider<GridEntry> slowDataProvider = new SlowDataProvider<GridEntry>(createCollection(200));
+	
 	private static final String vaadinVersion = com.vaadin.shared.Version.getFullVersion();
 
 	private CssLayout gridwrapper;
 	private Grid<GridEntry> grid;
-	private boolean loadOnPoll;
+	private boolean loadOnPoll;		// use one short poll to force replacing of the DataProvider which might be slow
 
 	@Override
 	protected void init(final VaadinRequest vaadinRequest) {
@@ -60,7 +55,7 @@ public class MyUI extends UI implements PollListener {
 		final VerticalLayout vertLayout = new VerticalLayout();
 		vertLayout.setSizeFull();
 
-		addPollListener(this);
+		addPollListener(this);		// register this UI with the poll listener
 
 		// Adding Vaadin version label
 		Label versionLabel = new Label("Grid Test with Vaadin Version: " + vaadinVersion);
@@ -120,6 +115,9 @@ public class MyUI extends UI implements PollListener {
 		getPage().setTitle("Vaadin Grid Loading Performance Comparison");
 	}
 
+	/**
+	 * If there is a poll event switch to the fullGridDataProvider and disable polling again.
+	 */
 	@Override
 	public void poll(PollEvent event) {
 		if (loadOnPoll) {
@@ -137,14 +135,7 @@ public class MyUI extends UI implements PollListener {
 
 		int columns = 25;
 		int hiddenColumns = 5;
-		int rows = 100;
-
-		Set<GridEntry> gridEntrySet = new LinkedHashSet<>();
-		Random random = new Random();
-
-		for (int i = 1; i < rows + 1; i++) {
-			gridEntrySet.add(new GridEntry("Content Longer #" + i + ":" + random.nextInt()));
-		}
+		
 		grid = new Grid<>("My Test Grid", gridDP);
 
 		for (int i = 0; i < columns; i++) {
@@ -161,12 +152,13 @@ public class MyUI extends UI implements PollListener {
 		}
 
 		grid.setId("testGrid");
-
 		grid.setSizeFull();
-
 		gridwrapper.addComponent(grid);
 	}
 
+	/**
+	 * Return a collection of GridEntries containing Strings with the defined amount of rows.
+	 */
 	private LinkedList<GridEntry> createCollection(final int rows) {
 
 		LinkedList<GridEntry> gridEntryLinkedList = new LinkedList<>();
