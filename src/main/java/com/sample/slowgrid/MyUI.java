@@ -1,10 +1,4 @@
 package com.sample.slowgrid;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.Random;
-import java.util.Set;
-import javax.servlet.annotation.WebServlet;
 
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
@@ -25,6 +19,11 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.Random;
+import javax.servlet.annotation.WebServlet;
+
 /**
  * This UI is the application entry point.
  */
@@ -38,16 +37,19 @@ public class MyUI extends UI implements PollListener {
 		private static final long serialVersionUID = 1L;
 	}
 
-	private static ListDataProvider<GridEntry> emptyGridDataProvider = new ListDataProvider<GridEntry>(Collections.emptyList());
-	private ListDataProvider<GridEntry> fullGridDataProvider = new ListDataProvider<GridEntry>(createCollection(200));
-	// TODO - slow DataProvider that simulates a slower database backend
-	// private ListDataProvider<GridEntry> slowDataProvider = new SlowDataProvider<GridEntry>(createCollection(200));
+	private LinkedList<GridEntry> dummyListData = createCollection(200);
+	private ListDataProvider<GridEntry> emptyGridDataProvider = new ListDataProvider<GridEntry>(
+			Collections.emptyList());
+	private ListDataProvider<GridEntry> fullGridDataProvider = new ListDataProvider<GridEntry>(dummyListData);
+	private ListDataProvider<GridEntry> slowDataProvider = new SlowDataProvider<GridEntry>(dummyListData);
+
+	private ListDataProvider<GridEntry> pollingProvider = fullGridDataProvider;
 	
 	private static final String vaadinVersion = com.vaadin.shared.Version.getFullVersion();
 
 	private CssLayout gridwrapper;
 	private Grid<GridEntry> grid;
-	private boolean loadOnPoll;		// use one short poll to force replacing of the DataProvider which might be slow
+	private boolean loadOnPoll; // use one short poll to force replacing of the DataProvider which might be slow
 
 	@Override
 	protected void init(final VaadinRequest vaadinRequest) {
@@ -55,7 +57,7 @@ public class MyUI extends UI implements PollListener {
 		final VerticalLayout vertLayout = new VerticalLayout();
 		vertLayout.setSizeFull();
 
-		addPollListener(this);		// register this UI with the poll listener
+		addPollListener(this); // register this UI with the poll listener
 
 		// Adding Vaadin version label
 		Label versionLabel = new Label("Grid Test with Vaadin Version: " + vaadinVersion);
@@ -97,11 +99,29 @@ public class MyUI extends UI implements PollListener {
 		button3.setId("btnGridEmptyDeferFull");
 		button3.addClickListener(event -> {
 			buildGrid(emptyGridDataProvider);
+			pollingProvider = fullGridDataProvider;
 			loadOnPoll = true;
 			setPollInterval(1); // 1ms UI poll (as fast as possible)
 		});
 		horLayout.addComponent(button3);
 
+		// BTN4
+		final Button button4 = new Button("build full Grid with slow provider");
+		button4.setId("btnGridFullSleep");
+		button4.addClickListener(event -> buildGrid(slowDataProvider));
+		horLayout.addComponent(button4);
+
+		// BTN5
+		final Button button5 = new Button("build empty Grid deferred to full Grid with slow provider");
+		button5.setId("btnGridEmptyDeferFull");
+		button5.addClickListener(event -> {
+			buildGrid(emptyGridDataProvider);
+			pollingProvider = slowDataProvider;
+			loadOnPoll = true;
+			setPollInterval(1); // 1ms UI poll (as fast as possible)
+		});
+		horLayout.addComponent(button5);
+		
 		gridwrapper = new CssLayout();
 		gridwrapper.setSizeFull();
 
@@ -121,7 +141,7 @@ public class MyUI extends UI implements PollListener {
 	@Override
 	public void poll(PollEvent event) {
 		if (loadOnPoll) {
-			grid.setDataProvider(fullGridDataProvider);
+			grid.setDataProvider(pollingProvider);
 			setPollInterval(0);
 		}
 	}
@@ -135,7 +155,7 @@ public class MyUI extends UI implements PollListener {
 
 		int columns = 25;
 		int hiddenColumns = 5;
-		
+
 		grid = new Grid<>("My Test Grid", gridDP);
 
 		for (int i = 0; i < columns; i++) {
@@ -170,5 +190,5 @@ public class MyUI extends UI implements PollListener {
 
 		return gridEntryLinkedList;
 	}
-	
+
 }

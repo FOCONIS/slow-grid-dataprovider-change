@@ -13,9 +13,10 @@ Performance Results:
 
 - click the "clear UI" button and compare rendering times between:
 - clicking "build full Grid" button just loads the full grid with 200 rows by updating the empty DataProvider with a full one
-- clicking "build full Grid" button just loads an empty grid first and then defers the loading of the full grid with the 200 rows DataProvider shortly using polling
+- clicking "build empty Grid deferred to full Grid" button just loads an empty grid first and then defers the loading of the full grid with the 200 rows DataProvider shortly using polling
 - clicking "build empty Grid" button for comparison just loads an empty grid
-
+- clicking "build full Grid with slow provider" does the same as "build full Grid" but tries to mimic a slow database connection
+- clicking "build empty Grid deferred to full Grid with slow provider" does the same as "build empty Grid deferred to full Grid" but tries to mimic a slow database connection
 
 Project Usage
 =============
